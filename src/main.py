@@ -6,6 +6,50 @@ import digitalio
 
 from icm20948 import Icm20948
 
+accel_avg_x = 0
+accel_avg_y = 0
+accel_avg_z = 0
+
+
+def callibration():
+
+    start_time = time.perf_counter()
+    warmup_time = 3
+    gyro_moved = 0.02
+
+    # Find averages
+    init_xs = []
+    init_ys = []
+    init_zs = []
+
+    while time.perf_counter() - start_time < warmup_time:
+        accel = icm.get_accel()
+        gyro = icm.get_gyro()
+
+        # stopping from moving before it's done being ready
+        gyro_mag = gyro[0] ** 2 + gyro[1] ** 2 + gyro[2] ** 2
+        if gyro_mag > gyro_moved:
+            start_time = time.perf_counter()
+            init_xs = []
+            init_ys = []
+            init_zs = []
+            print("Stop moving! Sit still!")
+
+        print(accel[0])
+        init_xs.append(accel[0])
+        init_ys.append(accel[1])
+        init_zs.append(accel[2])
+
+    # cauculates the avg
+    accel_avg_x = sum(init_xs) / len(init_xs)
+    accel_avg_y = sum(init_ys) / len(init_ys)
+    accel_avg_z = sum(init_zs) / len(init_zs)
+    print(len(init_xs))
+    print(accel_avg_x)
+    print(accel_avg_y)
+    print(accel_avg_z)
+
+
 # initializing io
 motio_l_speed = pwmio.PWMOut(board.D16, frequency=10000, duty_cycle=0)
 motio_r_speed = pwmio.PWMOut(board.D5, frequency=10000, duty_cycle=0)
@@ -20,41 +64,7 @@ motio_l_dir.value = motio_r_dir.value = True
 
 icm = Icm20948()
 
-start_time = time.perf_counter()
-warmup_time = 3
-gyro_moved = 0.02
-
-# Find averages
-init_xs = []
-init_ys = []
-init_zs = []
-
-while time.perf_counter() - start_time < warmup_time:
-    accel = icm.get_accel()
-    gyro = icm.get_gyro()
-
-    # stopping from moving before it's done being ready
-    gyro_mag = gyro[0] ** 2 + gyro[1] ** 2 + gyro[2] ** 2
-    if gyro_mag > gyro_moved:
-        start_time = time.perf_counter()
-        init_xs = []
-        init_ys = []
-        init_zs = []
-        print("Stop moving! Sit still!")
-
-    print(accel[0])
-    init_xs.append(accel[0])
-    init_ys.append(accel[1])
-    init_zs.append(accel[2])
-
-# cauculates the avg
-accel_avg_x = sum(init_xs) / len(init_xs)
-accel_avg_y = sum(init_ys) / len(init_ys)
-accel_avg_z = sum(init_zs) / len(init_zs)
-print(len(init_xs))
-print(accel_avg_x)
-print(accel_avg_y)
-print(accel_avg_z)
+callibration()
 
 # otherstuff
 last_action = ""
@@ -106,8 +116,11 @@ while True:
 
             motio_l_speed.duty_cycle = motio_r_speed.duty_cycle = 400
 
+            # Controls the moters at a certain frequency to make sound
             motio_l_speed.frequency = motio_r_speed.frequency = 500
             time.sleep(0.05)
+            if enabled:
+                callibration()
             motio_l_speed.frequency = motio_r_speed.frequency = 650
             time.sleep(0.05)
             motio_l_speed.frequency = motio_r_speed.frequency = 800
@@ -115,7 +128,7 @@ while True:
             motio_l_speed.frequency = motio_r_speed.frequency = 950
             time.sleep(0.05)
             motio_l_speed.frequency = motio_r_speed.frequency = 1500
-            time.sleep(0.2)
+            time.sleep(0.25)
 
             motio_l_speed.duty_cycle = motio_r_speed.duty_cycle = 0
             motio_l_speed.frequency = motio_r_speed.frequency = 10000
