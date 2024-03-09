@@ -7,8 +7,8 @@ import digitalio
 from icm20948 import Icm20948
 
 # initializing io
-motio_l_speed = pwmio.PWMOut(board.D16, frequency=2000, duty_cycle=0)
-motio_r_speed = pwmio.PWMOut(board.D5, frequency=2000, duty_cycle=0)
+motio_l_speed = pwmio.PWMOut(board.D16, frequency=10000, duty_cycle=0)
+motio_r_speed = pwmio.PWMOut(board.D5, frequency=10000, duty_cycle=0)
 
 motio_l_dir = digitalio.DigitalInOut(board.D26)
 motio_l_dir.direction = digitalio.Direction.OUTPUT
@@ -16,6 +16,7 @@ motio_l_dir.direction = digitalio.Direction.OUTPUT
 motio_r_dir = digitalio.DigitalInOut(board.D6)
 motio_r_dir.direction = digitalio.Direction.OUTPUT
 
+motio_l_dir.value = motio_r_dir.value = True
 
 icm = Icm20948()
 
@@ -59,7 +60,7 @@ print(accel_avg_z)
 last_action = ""
 action_count = 0
 speed = 0
-enabled = True
+enabled = False
 steer = 0
 while True:
     accel = icm.get_accel()
@@ -84,7 +85,7 @@ while True:
     # I put this in  because of the sudden jolting of the chair made your head move in direactions you didn't want it to
     if action == last_action:
         action_count += 1
-        if action_count == 2:
+        if action_count == 3:
 
             if action == "front":
                 if speed < 3:
@@ -100,6 +101,23 @@ while True:
         elif action_count == 75 and action == "back" and speed == 0:
             enabled = not enabled
             print(action, end="")
+
+            motio_l_speed.duty_cycle = motio_r_speed.duty_cycle = 400
+
+            motio_l_speed.frequency = motio_r_speed.frequency = 500
+            time.sleep(0.05)
+            motio_l_speed.frequency = motio_r_speed.frequency = 650
+            time.sleep(0.05)
+            motio_l_speed.frequency = motio_r_speed.frequency = 800
+            time.sleep(0.05)
+            motio_l_speed.frequency = motio_r_speed.frequency = 950
+            time.sleep(0.05)
+            motio_l_speed.frequency = motio_r_speed.frequency = 1500
+            time.sleep(0.2)
+
+            motio_l_speed.duty_cycle = motio_r_speed.duty_cycle = 0
+            motio_l_speed.frequency = motio_r_speed.frequency = 10000
+
     else:
         # starts the counting of readings from the new action until the next one
         # makes the new action the new last action
@@ -112,8 +130,8 @@ while True:
 
         # It's adding and subtracting to make the steering work
         # If the right motor turns faster than the left one, you'll turn left, and vice versa
-        motor_l = (speed - steer) * 33
-        motor_r = (speed + steer) * 33
+        motor_l = (speed + steer) * 33
+        motor_r = (speed - steer) * 33
 
         # Stops the readding numbers from going past 100% speed
         motor_l = min(motor_l, 100)
