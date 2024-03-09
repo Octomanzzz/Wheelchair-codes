@@ -82,7 +82,8 @@ while True:
             action = "back"
 
     # There has to be three of the same readings in a row to make it actually make that action
-    # I put this in  because of the sudden jolting of the chair made your head move in direactions you didn't want it to
+    # I put this in  because of the sudden jolting of the chair made your head move in direactions that
+    #     you didn't want it to
     if action == last_action:
         action_count += 1
         if action_count == 3:
@@ -97,7 +98,8 @@ while True:
                 elif speed > -1:
                     speed -= 1
 
-        # This is the part that turns the whole chair on/off when you tilt back from speed 1, 2, or 3 and hold for 75 readings
+        # This is the part that turns the whole chair on/off when you tilt back from speed 1, 2, or 3
+        #     and hold for 75 readings
         elif action_count == 75 and action == "back" and speed == 0:
             enabled = not enabled
             print(action, end="")
@@ -125,7 +127,8 @@ while True:
         action_count = 0
 
     if enabled:
-        # If you only tilt a tiny bit then it doesn't count it, otherwise, the steering is a ratio to accel_y which is tilt
+        # If you only tilt a tiny bit then it doesn't count it, otherwise, the steering is a ratio
+        #     to accel_y which is tilt
         steer = 0 if accel_y < 2 and accel_y > -2 else accel_y * 0.455
 
         # It's adding and subtracting to make the steering work
